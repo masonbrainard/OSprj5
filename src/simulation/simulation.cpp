@@ -12,7 +12,6 @@ Simulation::Simulation(FlagOptions& flags)
 {
     this->flags = flags;
     this->frames.reserve(this->NUM_FRAMES);
-    
 }
 
 void Simulation::run() {
@@ -30,11 +29,42 @@ char Simulation::perform_memory_access(const VirtualAddress& virtual_address) {
 
     // TODO
 
+    //step one, convert virtual address into physical address
+
     return 0;
 }
 
 void Simulation::handle_page_fault(Process* process, size_t page) {
+    
     // TODO: implement me
+    //yessir
+    //if fifo
+    this->page_faults++; //total page faults
+    process->page_faults++; //page faults for this specific process
+
+    int replaced_page;
+
+    if(this->flags.strategy == ReplacementStrategy::FIFO)
+    {
+        //find oldest page
+        replaced_page = process->page_table.get_oldest_page();
+    }
+    else
+    {
+        //lru
+        replaced_page = process->page_table.get_least_recently_used_page();
+    }
+    //take replaced page and turn off present flag
+    process.page_table[replaced_page].present = false;
+    //find my new page thing in the thing
+    for(int i = 0; i < process.page_table.size(); i++)
+    {
+        if(process->page_table[i] == page)
+        {
+            process->page_table[i].present = true;
+            break;
+        }
+    }
 }
 
 void Simulation::print_summary() {

@@ -26,7 +26,7 @@ Process* Process::read_from_input(std::istream& in) {
 
 size_t Process::size() const
 {
-    // TODO
+    //TODO
     return this->num_bytes;
 }
 
@@ -34,19 +34,28 @@ size_t Process::size() const
 bool Process::is_valid_page(size_t index) const
 {
     // TODO
-    return false;
+    if(index < 0 || index > num_bytes)
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
 }
 
 
 size_t Process::get_rss() const
 {
     // TODO
+    //return resident set size of process
     return 0;
 }
 
 
 double Process::get_fault_percent() const
 {
-    // TODO
-    return 0.0;
+    //TODO
+    //is this right?
+    return page_faults / (memory_accesses + page_faults);
 }

@@ -31,7 +31,8 @@ Page* Page::read_from_input(std::istream& in) {
 size_t Page::size() const
 {
     // TODO
-    return 0;
+    //return the number of bytes in the page
+    return this->bytes.size();
 }
 
 

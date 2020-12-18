@@ -32,19 +32,24 @@ size_t Page::size() const
 {
     // TODO
     //return the number of bytes in the page
-    return this->bytes.size();
+    return bytes.size();
 }
 
 
 bool Page::is_valid_offset(size_t offset) const
 {
-    // TODO
-    return false;
+    if(bytes.size() <= offset || 0 > offset) 
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
 }
 
 
 char Page::get_byte_at_offset(size_t offset)
 {
-    // TODO
-    return false;
+    return bytes[offset];
 }

@@ -27,8 +27,8 @@ size_t PageTable::get_present_page_count() const {
 size_t PageTable::get_oldest_page() const {
     // TODO: implement me
     //what page is oldest in memory
-    auto oldest_age = 0;
-    auto oldest_num = 0;
+    size_t oldest_age = -1;
+    size_t oldest_num = 0;
     for(int i = 0; i < this->rows.size(); i++)
     {
         if(this->rows[i].present && this->rows[i].loaded_at < oldest_age)
@@ -44,8 +44,8 @@ size_t PageTable::get_oldest_page() const {
 size_t PageTable::get_least_recently_used_page() const {
     // TODO: implement me
     //what page in mem was least recently used?
-    int least_age = 0;
-    int least_num = 0;
+    size_t least_age = -1;
+    size_t least_num = 0;
     for(int i = 0; i < this->rows.size(); i++)
     {
         if(this->rows[i].present && this->rows[i].last_accessed_at < least_age)

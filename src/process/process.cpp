@@ -34,7 +34,7 @@ size_t Process::size() const
 bool Process::is_valid_page(size_t index) const
 {
     // TODO
-    if(index < 0 || index > num_bytes)
+    if(index < 0 || index >= pages.size())
     {
         return false;
     }
@@ -49,7 +49,7 @@ size_t Process::get_rss() const
 {
     // TODO
     //return resident set size of process
-    return 0;
+    return this->page_table.get_present_page_count();
 }
 
 
@@ -57,5 +57,12 @@ double Process::get_fault_percent() const
 {
     //TODO
     //is this right?
-    return page_faults / (memory_accesses + page_faults);
+    if(memory_accesses + page_faults == 0)
+    {
+        return 0.0;
+    }
+    else
+    {
+        return 100 * (float) page_faults / (memory_accesses);
+    }
 }

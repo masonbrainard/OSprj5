@@ -7,11 +7,17 @@
 
 #include "simulation/simulation.h"
 #include <stdexcept>
+#include <bitset>
 
 Simulation::Simulation(FlagOptions& flags)
 {
     this->flags = flags;
-    this->frames.reserve(this->NUM_FRAMES);
+    // this->frames.reserve(this->NUM_FRAMES);
+    for(int i = 0; i < NUM_FRAMES; i++)
+    {
+        frames.push_back(Frame());
+        free_frames.push_back(i);
+    }
 }
 
 void Simulation::run() {
@@ -27,57 +33,60 @@ char Simulation::perform_memory_access(const VirtualAddress& virtual_address) {
         std::cout << virtual_address << std::endl;
     }
 
-    // TODO
-    //print physical address corresponding to virtual address
-
-    char byte;
-
-    //determine if the page is in frames
-    for(int i = 0; i < frames.size(); i++)
+    if(!this->processes[virtual_address.process_id]->is_valid_page(virtual_address.page))
     {
-        if(frames[i].page_number == virtual_address.page && frames[i].process == processes[virtual_address.process_id])
+        throw("Wow that sucks.");
+    }
+    
+    if(this->processes[virtual_address.process_id]->page_table.rows[virtual_address.page].present)
+    {
+        if (this->flags.verbose) 
         {
-            if(frames[i].contents->is_valid_offset(virtual_address.offset))
-            {
-                frames[i].process->memory_accesses++;
-                return frames[i].contents->get_byte_at_offset(virtual_address.offset);
-            }
+            std::cout << "    -> IN MEMORY" << std::endl;
         }
     }
-
-    //if it didn't return already page fault
-    if(this->flags.verbose) {
-        std::cout << "PAGE FAULT\n" <<std::endl;
-    }
-
-    this->handle_page_fault(processes.at(virtual_address.process_id), virtual_address.page);
-
-    //now find where this page is and return byte
-    //determine if the page is in frames
-    for(int i = 0; i < frames.size(); i++)
+    else
     {
-        if(frames[i].page_number == virtual_address.page && frames[i].process == processes[virtual_address.process_id])
+        if (this->flags.verbose) 
         {
-            if(frames[i].contents->is_valid_offset(virtual_address.offset))
-            {
-                frames[i].process->memory_accesses++;
-                return frames[i].contents->get_byte_at_offset(virtual_address.offset);
-            }
-        }
+            std::cout << "    -> PAGE FAULT" << std::endl;
+        }        
+        handle_page_fault(this->processes[virtual_address.process_id], virtual_address.page);
     }
-    throw("Frame not placed in, this is bad.\n");
+
+    if (this->flags.verbose) 
+    {
+        //calc physical address  
+        auto frame = processes[virtual_address.process_id]->page_table.rows[virtual_address.page].frame;
+        auto offset = virtual_address.offset;
+
+        auto frame_bits = std::bitset<virtual_address.PAGE_BITS>(frame);  
+        auto offset_bits = std::bitset<virtual_address.OFFSET_BITS>(offset);   
+
+        std::cout << "    -> physical address " << frame_bits << offset_bits  << " [frame: " << frame << "; offset: " << offset << "]" << std::endl;
+        
+        std::cout << "    -> RSS: " << processes[virtual_address.process_id]->get_rss() << std::endl << std::endl;
+    } 
+
+
+
+    return '0';
+  
 }
 
 void Simulation::handle_page_fault(Process* process, size_t page) {
     
     // TODO: implement me
     this->page_faults++; //total page faults
-    
+    process->page_faults++; //per process page faults
+    process->page_table.rows[page].present = true;
+
     //are there any free frames?
-    if(free_frames.size() > 0)
+    if(free_frames.size() > 0 && process->get_rss() < this->flags.max_frames)
     {
         //grab frist frame and place process + page in
         frames[free_frames.front()].set_page(process, page);
+        process->page_table.rows[page].frame = free_frames.front();
         free_frames.pop_front();
     }
     //no free frames
@@ -98,19 +107,7 @@ void Simulation::handle_page_fault(Process* process, size_t page) {
         }
         //set replaced page present to false
         process->page_table.rows[replaced_page].present = false;
-        //set new page present to true
-        process->page_table.rows[page].present = true;
-
-        for(int i = 0; i < frames.size(); i++)
-        {
-            //double check end
-            if(frames[i].page_number == replaced_page && frames[i].process == processes[replaced_page])
-            {
-                process->page_faults++;
-                frames[i].set_page(process, page);
-                break;
-            }
-        }
+        process->page_table.rows[page].frame = process->page_table.rows[replaced_page].frame;
     }
 }
 

@@ -44,8 +44,8 @@ size_t PageTable::get_oldest_page() const {
 size_t PageTable::get_least_recently_used_page() const {
     // TODO: implement me
     //what page in mem was least recently used?
-    auto least_age = 0;
-    auto least_num = 0;
+    int least_age = 0;
+    int least_num = 0;
     for(int i = 0; i < this->rows.size(); i++)
     {
         if(this->rows[i].present && this->rows[i].last_accessed_at < least_age)

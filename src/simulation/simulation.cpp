@@ -28,41 +28,88 @@ char Simulation::perform_memory_access(const VirtualAddress& virtual_address) {
     }
 
     // TODO
+    //print physical address corresponding to virtual address
 
-    //step one, convert virtual address into physical address
+    char byte;
 
-    return 0;
+    //determine if the page is in frames
+    for(int i = 0; i < frames.size(); i++)
+    {
+        if(frames[i].page_number == virtual_address.page && frames[i].process == processes[virtual_address.process_id])
+        {
+            if(frames[i].contents->is_valid_offset(virtual_address.offset))
+            {
+                frames[i].process->memory_accesses++;
+                return frames[i].contents->get_byte_at_offset(virtual_address.offset);
+            }
+        }
+    }
+
+    //if it didn't return already page fault
+    if(this->flags.verbose) {
+        std::cout << "PAGE FAULT\n" <<std::endl;
+    }
+
+    this->handle_page_fault(processes.at(virtual_address.process_id), virtual_address.page);
+
+    //now find where this page is and return byte
+    //determine if the page is in frames
+    for(int i = 0; i < frames.size(); i++)
+    {
+        if(frames[i].page_number == virtual_address.page && frames[i].process == processes[virtual_address.process_id])
+        {
+            if(frames[i].contents->is_valid_offset(virtual_address.offset))
+            {
+                frames[i].process->memory_accesses++;
+                return frames[i].contents->get_byte_at_offset(virtual_address.offset);
+            }
+        }
+    }
+    throw("Frame not placed in, this is bad.\n");
 }
 
 void Simulation::handle_page_fault(Process* process, size_t page) {
     
     // TODO: implement me
-    //yessir
-    //if fifo
     this->page_faults++; //total page faults
-    process->page_faults++; //page faults for this specific process
-
-    int replaced_page;
-
-    if(this->flags.strategy == ReplacementStrategy::FIFO)
+    
+    //are there any free frames?
+    if(free_frames.size() > 0)
     {
-        //find oldest page
-        replaced_page = process->page_table.get_oldest_page();
+        //grab frist frame and place process + page in
+        frames[free_frames.front()].set_page(process, page);
+        free_frames.pop_front();
     }
+    //no free frames
     else
-    {
-        //lru
-        replaced_page = process->page_table.get_least_recently_used_page();
-    }
-    //take replaced page and turn off present flag
-    process.page_table[replaced_page].present = false;
-    //find my new page thing in the thing
-    for(int i = 0; i < process.page_table.size(); i++)
-    {
-        if(process->page_table[i] == page)
+    {        
+        //find page to replace
+        size_t replaced_page = 0;
+
+        if(this->flags.strategy == ReplacementStrategy::FIFO)
         {
-            process->page_table[i].present = true;
-            break;
+            //find oldest page
+            replaced_page = process->page_table.get_oldest_page();
+        }
+        else
+        {
+            //lru
+            replaced_page = process->page_table.get_least_recently_used_page();
+        }
+        //set replaced page present to false
+        process->page_table.rows[replaced_page].present = false;
+        //set new page present to true
+        process->page_table.rows[page].present = true;
+
+        for(int i = 0; i < frames.size(); i++)
+        {
+            //double check end
+            if(frames[i].page_number == replaced_page && frames[i].process == processes[replaced_page])
+            {
+                process->page_faults++;
+                frames[i].set_page(process, page);
+                break;
+            }
         }
     }
 }

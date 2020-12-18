@@ -11,7 +11,7 @@ using namespace std;
 void Frame::set_page(Process* process, size_t page_number) {
     // TODO: implement me
     //set page
-    this->process = *process;
+    this->process = process;
     this->page_number = page_number;
-    this->contents = *process->pages[page_number];
+    this->contents = process->pages[page_number];
 }

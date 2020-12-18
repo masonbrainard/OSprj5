@@ -1,0 +1,41 @@
+{
+  "deliverables": {
+    "project-submission": {
+      "resubmission-detected": false,
+      "slip-days-spent": 0,
+      "base-checks": [
+        {
+          "warnings": [],
+          "name": "InGitRepo"
+        },
+        {
+          "warnings": [],
+          "name": "RunningOnIsengard"
+        },
+        {
+          "warnings": [],
+          "name": "UntrackedFiles"
+        },
+        {
+          "warnings": [],
+          "name": "UncommittedFiles"
+        },
+        {
+          "warnings": [],
+          "name": "CodeCompiles"
+        }
+      ],
+      "hostname": "isengard.mines.edu",
+      "calc-slip-days": 4,
+      "local-timestamp": 1608266357,
+      "local-due-date": 1607990399,
+      "deliverable-specific-checks": [],
+      "carried-slip-days": 0
+    }
+  },
+  "author-info": {
+    "username": "masonbrainard",
+    "full-name": "Mason Brainard",
+    "cwid": "10740921"
+  }
+}

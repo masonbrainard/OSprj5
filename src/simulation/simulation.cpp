@@ -35,7 +35,8 @@ char Simulation::perform_memory_access(const VirtualAddress& virtual_address) {
 
     if(!this->processes[virtual_address.process_id]->is_valid_page(virtual_address.page))
     {
-        throw("Wow that sucks.");
+        std::cout << "SEGFAULT - INVALID PAGE" << std::endl;
+        exit(1);
     }
     
     if(this->processes[virtual_address.process_id]->page_table.rows[virtual_address.page].present)
@@ -65,13 +66,18 @@ char Simulation::perform_memory_access(const VirtualAddress& virtual_address) {
 
         std::cout << "    -> physical address " << frame_bits << offset_bits  << " [frame: " << frame << "; offset: " << offset << "]" << std::endl;
         
+        if(!this->processes[virtual_address.process_id]->pages[virtual_address.page]->is_valid_offset(virtual_address.offset))
+        {
+            std::cout << "SEGFAULT - INVALID OFFSET" << std::endl;
+            exit(1);
+        }
+
         std::cout << "    -> RSS: " << processes[virtual_address.process_id]->get_rss() << std::endl << std::endl;
     } 
 
-
-
+    processes[virtual_address.process_id]->page_table.rows[virtual_address.page].last_accessed_at = this->memory_accesses++;
+    processes[virtual_address.process_id]->memory_accesses++;
     return '0';
-  
 }
 
 void Simulation::handle_page_fault(Process* process, size_t page) {
@@ -79,8 +85,7 @@ void Simulation::handle_page_fault(Process* process, size_t page) {
     // TODO: implement me
     this->page_faults++; //total page faults
     process->page_faults++; //per process page faults
-    process->page_table.rows[page].present = true;
-
+   
     //are there any free frames?
     if(free_frames.size() > 0 && process->get_rss() < this->flags.max_frames)
     {
@@ -93,7 +98,7 @@ void Simulation::handle_page_fault(Process* process, size_t page) {
     else
     {        
         //find page to replace
-        size_t replaced_page = 0;
+        size_t replaced_page = -1;
 
         if(this->flags.strategy == ReplacementStrategy::FIFO)
         {
@@ -109,6 +114,8 @@ void Simulation::handle_page_fault(Process* process, size_t page) {
         process->page_table.rows[replaced_page].present = false;
         process->page_table.rows[page].frame = process->page_table.rows[replaced_page].frame;
     }
+    process->page_table.rows[page].present = true;
+    process->page_table.rows[page].loaded_at = this->memory_accesses;
 }
 
 void Simulation::print_summary() {

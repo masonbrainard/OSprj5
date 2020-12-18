@@ -106,6 +106,8 @@ public:
     */
     size_t page_faults = 0;
 
+    size_t memory_accesses = 0;
+
     /**
     * A list containing the indices of all frames that are not currently in use.
     */
